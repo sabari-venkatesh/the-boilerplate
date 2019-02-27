@@ -2,6 +2,7 @@
   "name": "blockchain",
   "version": "1.0.0",
   "description": "",
+  "homepage": "https://github.com/sabarigr/the-boilerplate",
   "main": "index.js",
   "scripts": {
     "build": "NODE_ENV=production webpack --config webpack.prod.babel.js",
