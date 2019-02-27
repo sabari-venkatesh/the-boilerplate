@@ -1,0 +1,201 @@
+import path from 'path';
+import glob from 'glob';
+import HTMLWebpackPlugin from 'html-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import CleanWebpackPlugin from 'clean-webpack-plugin';
+import TerserPlugin from 'terser-webpack-plugin';
+
+const devMode = process.env.NODE_ENV !== 'production';
+
+// Reads `views` directory for `pug` files and inputs them to HTMLWebpackPlugin to generate corresponding `html` files
+const generateHTMLPlugins = () => glob.sync('./src/views/*.pug').map(dir => {
+  const fileName = path.basename(dir).split('.')[0];
+  return new HTMLWebpackPlugin({
+    filename: `${fileName}.html`,
+    title: `Hello ${fileName}`,
+    template: path.resolve(__dirname, dir),
+  });
+});
+
+const config = {
+  context: path.resolve(__dirname, 'src'),
+  entry: './index.js',
+  mode: process.env.NODE_ENV,
+  optimization: {
+    minimize: !devMode,
+    minimizer: [new TerserPlugin({
+      cache: true,
+      parallel: true,
+      sourceMap: true, // Must be set to true if using source-maps in production
+      terserOptions: {
+        // https://github.com/webpack-contrib/terser-webpack-plugin#terseroptions
+      }
+    })]
+  },
+  module: {
+    rules: [{
+      test: /\.pug$/,
+      exclude: ['/node_modules/'],
+      use: {
+        loader: 'pug-loader',
+        options: {
+          pretty: true
+        }
+      }
+    }, {
+      test: /\.(sa|sc|c)ss$/,
+      use: [
+        devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
+        {
+          loader: 'css-loader',
+          options: {
+            importLoaders: 2,
+            url: false,
+            sourceMap: true
+          }
+        },
+        {
+          loader: 'postcss-loader',
+          options: {
+            plugins: [
+              require('autoprefixer')
+            ]
+          }
+        },
+        {
+          loader: 'sass-loader',
+          options: {
+            sourceMap: true
+          }
+        }]
+    }]
+  },
+  output: {
+    filename: 'js/[name].bundle.js',
+    path: path.resolve(__dirname, 'dist'),
+    publicPath: '../'
+  },
+  plugins: [
+    new CleanWebpackPlugin(['dist']),
+    new MiniCssExtractPlugin({
+      filename: devMode ? 'css/[name].css' : 'css/[name].[hash].css'
+    }),
+    ...generateHTMLPlugins(),
+  ],
+  stats: {
+    colors: true
+  }
+}
+
+export default config;
+
+
+/**
+ *
+ * import path from 'path';
+import webpack from 'webpack';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+
+const devMode = process.env.NODE_ENV !== 'production'
+
+const config = {
+  context: path.join(__dirname, 'src'),
+  mode: process.env.NODE_ENV,
+  entry: './app.js',
+  module: {
+    rules: [{
+      test: /\.js$/,
+      exclude: ['/node_modules/'],
+      use: [{
+        loader: 'babel-loader',
+        options: {
+          cacheDirectory: true,
+        }
+      }]
+    }, {
+      test: /\.(sa|sc|c)ss$/,
+      use: [
+        devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
+        {
+          loader: 'css-loader',
+          options: {
+            importsLoader: 1,
+            url: false,
+            sourceMap: true
+          }
+        },
+        {
+          loader: 'postcss-loader',
+          options: {
+            plugins: [
+              require('autoprefixer')
+            ]
+          }
+        },
+        {
+          loader: 'sass-loader',
+          options: {
+            sourceMap: true
+          }
+        },
+        {
+          test: /\.(png|jpg|gif|svg)$/,
+          use: [
+            {
+              loader: 'url-loader',
+              options: {
+                limit: 8192
+              }
+            },
+            {
+              loader: 'file-loader',
+              options: {
+                outputPath: 'img'
+              }
+            },
+            {
+              loader: 'image-webpack-loader',
+              options: {
+                mozjpeg: {
+                  progressive: true
+                },
+                gifsicle: {
+                  interlaced: false
+                },
+                optipng: {
+                  optimizationLevel: 2
+                },
+                pngquant: {
+                  quality: '75-90',
+                  speed: 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          test: /\.(ttf|eot|woff|woff2|svg)$/,
+          loader: 'file-loader',
+          options: {
+            name: 'fonts/[name].[ext]'
+          }
+        }
+      ],
+    }]
+  },
+  output: {
+    filename: 'bundle.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      title: 'My App',
+      template: path.resolve(__dirname, 'src/index.html'),
+      filename: 'index.html',
+      hash: true,
+    })
+  ]
+}
+
+export default config;
+ */
